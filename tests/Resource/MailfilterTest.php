@@ -147,4 +147,21 @@ final class MailfilterTest extends MailcoreTestCase
         $this->expectException(\Inboxcom\Mailcore\Exception\BadRequestException::class);
         $this->client(self::error(400, 'IPv4 address not valid'))->mailfilter()->isListedOnCdl('nope');
     }
+
+    public function testCdlLookupForwardsOptionalEmail(): void
+    {
+        $client = $this->client(self::empty(200));
+        $client->mailfilter()->isListedOnCdl('8.8.8.8', 'who.demo.test@example.com');
+
+        self::assertSame('/mailfilter/cdllookup', $this->http->lastPath());
+        self::assertSame(['ip' => '8.8.8.8', 'email' => 'who.demo.test@example.com'], $this->http->lastQuery());
+    }
+
+    public function testCdlLookupOmitsEmailWhenNotGiven(): void
+    {
+        $client = $this->client(self::empty(200));
+        $client->mailfilter()->isListedOnCdl('8.8.8.8');
+
+        self::assertSame(['ip' => '8.8.8.8'], $this->http->lastQuery());
+    }
 }
