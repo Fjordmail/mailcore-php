@@ -252,6 +252,21 @@ final class MailfilterContractTest extends ContractTestCase
         self::assertTrue($this->client->mailfilter()->isListedOnRbl('127.0.0.2'));
     }
 
+    public function testCdlLookupCleanAddressReturnsFalse(): void
+    {
+        self::assertFalse($this->client->mailfilter()->isListedOnCdl('8.8.8.8'));
+    }
+
+    public function testCdlLookupInvalidIpThrowsBadRequest(): void
+    {
+        $this->expectException(BadRequestException::class);
+        $this->client->mailfilter()->isListedOnCdl('not-an-ip');
+    }
+
+    // No "listed address returns true" CDL test: unlike the RBLs, the CDL has no
+    // public canonical test entry (127.0.0.2 reads CLEAN on it), so there is no
+    // stable IP that reliably yields a 409 to assert against.
+
     public function testLatestSmtpLimitHitsInvalidMailboxplanIdIs417(): void
     {
         // The typed latestSmtpLimitHits(?int) can't send a malformed id, so hit it raw.

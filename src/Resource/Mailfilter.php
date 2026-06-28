@@ -291,6 +291,38 @@ final class Mailfilter
     }
 
     /**
+     * Look an IPv4 address up against the CDL (the composite deny list Mailcore
+     * enforces). Unlike {@see isListedOnRbl()}, a clean result carries no body —
+     * the outcome is conveyed by the status code alone.
+     *
+     * @return bool True if the address is currently listed (the API's 409),
+     *              false if clean (200).
+     */
+    #[OA\Get(
+        path: '/mailfilter/cdllookup',
+        operationId: 'cdlLookup',
+        summary: 'CDL lookup',
+        description: 'Look up an IPv4 address against the CDL (composite deny list) Mailcore enforces',
+        tags: ['mailfilter'],
+        parameters: [new OA\Parameter(ref: '#/components/parameters/IPv4')],
+        responses: [
+            new OA\Response(response: 200, description: 'Not found on the CDL'),
+            new OA\Response(response: 400, description: 'IPv4 address not valid', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 409, description: 'Found listed on the CDL', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+        ],
+    )]
+    public function isListedOnCdl(string $ip): bool
+    {
+        try {
+            $this->transport->get('/mailfilter/cdllookup', ['ip' => $ip]);
+
+            return false;
+        } catch (ConflictException) {
+            return true;
+        }
+    }
+
+    /**
      * Accept a full e-mail address (`user@domain.com`) or a domain wildcard
      * (`*@domain.com`), matching what the mail-filter endpoints take.
      *

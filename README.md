@@ -55,18 +55,18 @@ Every non-2xx response throws a subclass of `Inboxcom\Mailcore\Exception\ApiExce
 
 ## Scope
 
-The core covers **all 53 operations** of the live Mailcore API, grouped by tag onto resource accessors:
+The core covers **all 54 operations** of the live Mailcore API, grouped by tag onto resource accessors:
 
 | Accessor | Operations |
 | --- | --- |
 | `users()` | 34 — CRUD, aliases (+ list), forwards (+ list), passwords, flags, snapshots/restores, logins, limits, spam tolerance, temporary access |
 | `domains()` | 5 — count, add, add alias, list, remove |
 | `mailboxplans()` | 1 — list |
-| `mailfilter()` | 11 — SMTP-limit/spam-flag feeds, white/blacklists, RBL lookup |
+| `mailfilter()` | 12 — SMTP-limit/spam-flag feeds, white/blacklists, RBL + CDL lookups |
 | `reports()` | 1 — suspicious mailbox activity |
 | `datadump()` | 1 — fetch latest (raw bytes) |
 
-Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`).
+Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`, `mailfilter()->isListedOnCdl()`).
 
 ## OpenAPI
 
