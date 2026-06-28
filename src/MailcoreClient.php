@@ -34,6 +34,12 @@ final class MailcoreClient
     /** Placeholder — set the real endpoint via the constructor, MAILCORE_BASE_URI, or config. */
     public const DEFAULT_BASE_URI = 'https://api.example.com';
 
+    /** Default overall request timeout, in seconds (0 disables it). */
+    public const DEFAULT_TIMEOUT = 30.0;
+
+    /** Default connection timeout, in seconds (0 disables it). */
+    public const DEFAULT_CONNECT_TIMEOUT = 10.0;
+
     private readonly Transport $transport;
 
     private ?Users $users = null;
@@ -43,18 +49,32 @@ final class MailcoreClient
     private ?Reports $reports = null;
     private ?Datadump $datadump = null;
 
+    /**
+     * @param float $timeout        Overall request timeout in seconds; 0 disables it.
+     *                              Applied only to the default Guzzle client — ignored
+     *                              when you inject your own $httpClient (configure it there).
+     *                              A whole dump from datadump()->fetch() can be large, so
+     *                              raise this (or pass 0) if you hit timeouts on it.
+     * @param float $connectTimeout Connection timeout in seconds; 0 disables it. Same
+     *                              "default client only" caveat as $timeout.
+     */
     public function __construct(
         string $apiKey,
         string $baseUri = self::DEFAULT_BASE_URI,
         ?ClientInterface $httpClient = null,
         ?RequestFactoryInterface $requestFactory = null,
+        float $timeout = self::DEFAULT_TIMEOUT,
+        float $connectTimeout = self::DEFAULT_CONNECT_TIMEOUT,
     ) {
         if (trim($apiKey) === '') {
             throw new \InvalidArgumentException('A Mailcore API key is required.');
         }
 
         $this->transport = new Transport(
-            $httpClient ?? new GuzzleClient(),
+            $httpClient ?? new GuzzleClient([
+                'timeout' => $timeout,
+                'connect_timeout' => $connectTimeout,
+            ]),
             $requestFactory ?? new HttpFactory(),
             $apiKey,
             $baseUri,

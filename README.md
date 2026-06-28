@@ -19,6 +19,14 @@ composer require inboxcom/mailcore-php
 
 Requires PHP >= 8.4. Guzzle is used by default (it is itself a PSR-18 client), but you can inject any PSR-18 client + PSR-17 request factory.
 
+The default client uses a **30s request timeout** and **10s connect timeout**; override per client (seconds, `0` disables):
+
+```php
+$client = new MailcoreClient('your-api-key', timeout: 60.0, connectTimeout: 5.0);
+```
+
+A whole dump from `datadump()->fetch()` can be large — raise `timeout` (or pass `0`) for it. These options apply only to the default Guzzle client; when you inject your own (below), configure timeouts on it.
+
 ## Usage
 
 ```php
