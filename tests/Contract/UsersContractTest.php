@@ -656,8 +656,50 @@ final class UsersContractTest extends ContractTestCase
         $this->client->users()->newPassword($email, 'Zx9!ContractSdk7q');
 
         // ...so the original is now a recently-used password. testpasswordcomplexity
-        // reports 409 "used in the last 365 days" (newpassword itself allows reuse -> 200).
+        // reports 409 "used in the last 365 days". (newpassword does NOT yet enforce
+        // this — tracked by the failing testNewPasswordShouldRejectReusedPassword.)
         self::assertSame(409, $this->rawStatus('/users/testpasswordcomplexity', [
+            'email' => $email,
+            'password' => self::VALID_PASSWORD,
+        ]));
+    }
+
+    /**
+     * newpassword SHOULD reject a password identical to the current one (405), the
+     * way testpasswordcomplexity does. The live API does not yet enforce this on
+     * newpassword (it returns 200), so this test FAILS on purpose — it tracks the
+     * gap and turns green once the API enforces it. See the README
+     * "Policy the live API does not enforce".
+     */
+    public function testNewPasswordShouldRejectMatchingCurrent(): void
+    {
+        // Freshly created: VALID_PASSWORD is the current password.
+        $email = $this->createMailbox('newpw-cur');
+
+        self::assertSame(405, $this->rawStatus('/users/newpassword', [
+            'email' => $email,
+            'password' => self::VALID_PASSWORD,
+        ]));
+    }
+
+    /**
+     * newpassword SHOULD reject a password used within the last 365 days (409), the
+     * way testpasswordcomplexity does. The live API does not yet enforce this on
+     * newpassword (it returns 200), so this test FAILS on purpose — it tracks the
+     * gap and turns green once the API enforces it.
+     */
+    public function testNewPasswordShouldRejectReusedPassword(): void
+    {
+        // Created with VALID_PASSWORD; rotate away so VALID_PASSWORD becomes a
+        // former (recently-used) password that is no longer the current one.
+        $email = $this->createMailbox('newpw-reuse');
+        $this->client->users()->newPassword($email, 'Zx9!RotatedPass7q');
+        $this->assertEventually(
+            fn () => $this->client->users()->verifyPassword($email, 'Zx9!RotatedPass7q'),
+            "newpassword to activate the rotated password on {$email}",
+        );
+
+        self::assertSame(409, $this->rawStatus('/users/newpassword', [
             'email' => $email,
             'password' => self::VALID_PASSWORD,
         ]));

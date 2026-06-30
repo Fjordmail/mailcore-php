@@ -125,7 +125,7 @@ final class DomainsContractTest extends ContractTestCase
         $domains = $this->client->domains()->list(limit: '0,3');
 
         self::assertLessThanOrEqual(3, count($domains));
-        self::assertContainsOnly('string', $domains);
+        self::assertContainsOnlyString($domains);
     }
 
     public function testListWithFilter(): void
@@ -133,7 +133,7 @@ final class DomainsContractTest extends ContractTestCase
         $domains = $this->client->domains()->list(filter: '*', limit: '0,5');
 
         self::assertLessThanOrEqual(5, count($domains));
-        self::assertContainsOnly('string', $domains);
+        self::assertContainsOnlyString($domains);
     }
 
     public function testListByDomainLooksUpExisting(): void
