@@ -146,13 +146,6 @@ final class UsersContractTest extends ContractTestCase
         // Hard conformance: the single-user response must contain exactly these keys.
         // Note: `email` is NOT in the body — it's the lookup input; the SDK injects
         // it into the User DTO from the query argument.
-        //
-        // KNOWN-FAILING on a fresh mailbox: six keys are returned only conditionally —
-        // `forwards`/`aliases` (omitted when empty) and `days_over_quota`,
-        // `mailbox_messages`, `mailbox_quotapct`, `mailbox_usage` (omitted until the
-        // mailbox has usage data). A brand-new mailbox returns 16 keys, so this exact
-        // match fails until the API always includes them (see ISSUES.md). It is the
-        // contract we want; flips green once the API conforms.
         self::assertEqualsCanonicalizing(
             [
                 'active', 'imap', 'pop3', 'mailbox_quota', 'mailbox_quota_override',
