@@ -708,18 +708,23 @@ final class Users
     }
 
     /**
-     * Grant time-limited administrative access via a temporary password.
+     * Grant time-limited administrative access via a temporary password, and
+     * return that password.
      *
      * NOTE: sensitive towards GDPR / code of conduct — restrict to admins.
      *
      * @param int|null    $timeWindow   Minutes until expiry (API default 10).
-     * @param string|null $tempPassword Use a specific temporary password.
+     * @param string|null $tempPassword Use a specific temporary password; when
+     *                                  omitted the API generates a random one.
+     *
+     * @return string The temporary password now in effect — the one supplied,
+     *                or the generated one when $tempPassword is null.
      */
     #[OA\Get(
         path: '/users/temporaryaccess',
         operationId: 'temporaryAccess',
         summary: 'Temporary access',
-        description: 'Set a time-limited temporary password for administrative access (GDPR-sensitive)',
+        description: 'Set a time-limited temporary password for administrative access (GDPR-sensitive). Returns the temporary password (generated when none is supplied).',
         tags: ['users'],
         parameters: [
             new OA\Parameter(ref: '#/components/parameters/Email'),
@@ -727,16 +732,19 @@ final class Users
             new OA\Parameter(ref: '#/components/parameters/TemporaryPassword'),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Temporary password set'),
+            new OA\Response(response: 200, description: 'Temporary password set; the body is that password', content: new OA\JsonContent(type: 'string')),
             new OA\Response(response: 404, description: 'User not found', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
         ],
     )]
-    public function temporaryAccess(string $email, ?int $timeWindow = null, ?string $tempPassword = null): void
+    public function temporaryAccess(string $email, ?int $timeWindow = null, ?string $tempPassword = null): string
     {
-        $this->transport->get('/users/temporaryaccess', [
+        // The API's parameter is `password` (NOT `temppassword`, which it silently
+        // ignores and generates a random one instead). The response body is the
+        // resulting temporary password.
+        return (string) $this->transport->get('/users/temporaryaccess', [
             'email' => $email,
             'timewindow' => $timeWindow,
-            'temppassword' => $tempPassword,
+            'password' => $tempPassword,
         ]);
     }
 

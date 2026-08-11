@@ -423,8 +423,9 @@ final class UsersContractTest extends ContractTestCase
     {
         $email = $this->createMailbox('tempaccess');
 
-        $this->client->users()->temporaryAccess($email, timeWindow: 5);
-        self::assertTrue(true); // 200
+        // With no password supplied, the API generates one and returns it.
+        $generated = $this->client->users()->temporaryAccess($email, timeWindow: 5);
+        self::assertNotSame('', $generated, 'temporaryAccess should return the generated password');
     }
 
     public function testMailLimitControls(): void
@@ -854,9 +855,12 @@ final class UsersContractTest extends ContractTestCase
     {
         $email = $this->createMailbox('tempaccess-pw');
 
-        // The explicit temp password is sent as `temppassword` and accepted (200).
-        $this->client->users()->temporaryAccess($email, tempPassword: 'Tmp!Pass123xy');
-        self::assertSame(200, $this->rawStatus('/users/temporaryaccess', ['email' => $email, 'temppassword' => 'Tmp!Pass456zw']));
+        // A supplied temp password is honoured (sent as `password`) and returned
+        // verbatim; the API only generates a random one when none is supplied.
+        // (Checking HTTP 200 is not enough: a wrong param name is silently ignored
+        // and still returns 200 with a generated password.)
+        $supplied = 'Tmp!Pass123xy';
+        self::assertSame($supplied, $this->client->users()->temporaryAccess($email, tempPassword: $supplied));
     }
 
     public function testAddWithIgnoreReservationBypassesReservation(): void

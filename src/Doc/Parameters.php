@@ -38,7 +38,7 @@ use OpenApi\Attributes as OA;
 #[OA\Parameter(parameter: 'SnapshotSerial', name: 'serial', in: 'query', required: true, description: 'Snapshot serial (from /users/listsnapshots)', schema: new OA\Schema(type: 'string'))]
 #[OA\Parameter(parameter: 'SpamToleranceScore', name: 'score', in: 'query', required: true, description: 'Spam tolerance level (1 tolerant .. 5 aggressive)', schema: new OA\Schema(type: 'integer', format: 'int32', minimum: 1, maximum: 5))]
 #[OA\Parameter(parameter: 'TimeWindow', name: 'timewindow', in: 'query', required: false, description: 'Minutes until temporary access expires', schema: new OA\Schema(type: 'integer', format: 'int32', default: 10, minimum: 1, maximum: 365))]
-#[OA\Parameter(parameter: 'TemporaryPassword', name: 'temppassword', in: 'query', required: false, description: 'Temporary password (a random one is generated if omitted)', schema: new OA\Schema(type: 'string', format: 'password'))]
+#[OA\Parameter(parameter: 'TemporaryPassword', name: 'password', in: 'query', required: false, description: 'Temporary password (a random one is generated and returned if omitted)', schema: new OA\Schema(type: 'string', format: 'password'))]
 #[OA\Parameter(parameter: 'User', name: 'user', in: 'query', required: false, description: 'E-mail address of a single user to look up', schema: new OA\Schema(ref: '#/components/schemas/Email'))]
 final class Parameters
 {

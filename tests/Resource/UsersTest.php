@@ -155,13 +155,26 @@ final class UsersTest extends MailcoreTestCase
 
     public function testTemporaryAccessForwardsWindowAndPassword(): void
     {
-        $client = $this->client(self::empty());
-        $client->users()->temporaryAccess('a.demo.test@example.com', timeWindow: 5, tempPassword: 'Temp0rary!');
+        // The API's parameter is `password` (not `temppassword`), and the response
+        // body is the temporary password now in effect — which the method returns.
+        $client = $this->client(self::json('Temp0rary!'));
+        $result = $client->users()->temporaryAccess('a.demo.test@example.com', timeWindow: 5, tempPassword: 'Temp0rary!');
 
         self::assertSame(
-            ['email' => 'a.demo.test@example.com', 'timewindow' => '5', 'temppassword' => 'Temp0rary!'],
+            ['email' => 'a.demo.test@example.com', 'timewindow' => '5', 'password' => 'Temp0rary!'],
             $this->http->lastQuery(),
         );
+        self::assertSame('Temp0rary!', $result);
+    }
+
+    public function testTemporaryAccessReturnsTheGeneratedPassword(): void
+    {
+        // With no password supplied, the API generates one and returns it in the body.
+        $client = $this->client(self::json('Gen3ratedPass9x'));
+        $result = $client->users()->temporaryAccess('a.demo.test@example.com');
+
+        self::assertSame(['email' => 'a.demo.test@example.com'], $this->http->lastQuery());
+        self::assertSame('Gen3ratedPass9x', $result);
     }
 
     // --- data endpoints -------------------------------------------------------
