@@ -63,18 +63,18 @@ Every non-2xx response throws a subclass of `Inboxcom\Mailcore\Exception\ApiExce
 
 ## Scope
 
-The core covers **all 54 operations** of the live Mailcore API, grouped by tag onto resource accessors:
+The core covers **all 55 operations** of the live Mailcore API, grouped by tag onto resource accessors:
 
 | Accessor | Operations |
 | --- | --- |
 | `users()` | 34 — CRUD, aliases (+ list), forwards (+ list), passwords, flags, snapshots/restores, logins, limits, spam tolerance, temporary access |
 | `domains()` | 5 — count, add, add alias, list, remove |
 | `mailboxplans()` | 1 — list |
-| `mailfilter()` | 12 — SMTP-limit/spam-flag feeds, white/blacklists, RBL + CDL lookups |
+| `mailfilter()` | 13 — SMTP-limit/spam-flag feeds, white/blacklists, RBL + CDL + BPL lookups |
 | `reports()` | 1 — suspicious mailbox activity |
 | `datadump()` | 1 — fetch latest (raw bytes) |
 
-Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`, `mailfilter()->isListedOnCdl()`).
+Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`, `mailfilter()->isListedOnCdl()`, `mailfilter()->isListedOnBpl()`). For the BPL, `mailfilter()->bplLookup()` additionally returns a `BplListing` (sample usernames + abuse timeframe) when the host is blocked, or `null` when clean.
 
 ## OpenAPI
 

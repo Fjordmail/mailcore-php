@@ -60,6 +60,17 @@ use OpenApi\Attributes as OA;
     ],
 )]
 #[OA\Schema(
+    schema: 'BplListing',
+    type: 'object',
+    description: "BPL block details for a host, in the 409 body of /mailfilter/bpllookup.",
+    properties: [
+        new OA\Property(property: 'statusmsg', type: 'string', example: 'Host found on BPL'),
+        new OA\Property(property: 'date_added', type: 'string', format: 'date-time', description: 'When the host was blocked'),
+        new OA\Property(property: 'timeframe_min', type: 'integer', format: 'int32', description: 'Minutes the abuse spanned before the ban'),
+        new OA\Property(property: 'sample', type: 'array', items: new OA\Items(type: 'string'), description: 'Sample usernames tried during the abuse'),
+    ],
+)]
+#[OA\Schema(
     schema: 'Login',
     type: 'object',
     description: 'A login record; fields present vary by endpoint.',

@@ -26,6 +26,13 @@ class ApiException extends \RuntimeException implements MailcoreException
         public readonly int $statusCode,
         public readonly ?string $statusMsg,
         public readonly string $path,
+        /**
+         * The raw response body, verbatim. A few endpoints return meaningful data
+         * alongside a non-2xx status (e.g. /mailfilter/bpllookup's 409 carries the
+         * offending host's details), so it is preserved here. Never contains the
+         * API key — that lives in the request URL, not the response.
+         */
+        public readonly ?string $body = null,
     ) {
         $reason = $statusMsg ?? 'Mailcore API request failed';
         parent::__construct(sprintf('[%d] %s (%s)', $statusCode, $reason, $path));
@@ -34,7 +41,7 @@ class ApiException extends \RuntimeException implements MailcoreException
     /**
      * Build the most specific exception available for the given status code.
      */
-    public static function fromResponse(int $statusCode, ?string $statusMsg, string $path): self
+    public static function fromResponse(int $statusCode, ?string $statusMsg, string $path, ?string $body = null): self
     {
         $class = match (true) {
             $statusCode === 400 => BadRequestException::class,
@@ -48,6 +55,6 @@ class ApiException extends \RuntimeException implements MailcoreException
             default => self::class,
         };
 
-        return new $class($statusCode, $statusMsg, $path);
+        return new $class($statusCode, $statusMsg, $path, $body);
     }
 }

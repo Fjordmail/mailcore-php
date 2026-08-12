@@ -164,4 +164,39 @@ final class MailfilterTest extends MailcoreTestCase
 
         self::assertSame(['ip' => '8.8.8.8'], $this->http->lastQuery());
     }
+
+    public function testBplLookupListedAndClean(): void
+    {
+        self::assertTrue($this->client(self::error(409, 'Host found on BPL'))->mailfilter()->isListedOnBpl('8.8.8.8'));
+        self::assertFalse($this->client(self::empty(200))->mailfilter()->isListedOnBpl('8.8.8.8'));
+    }
+
+    public function testBplLookupSendsIpAndRethrowsOnInvalidIp(): void
+    {
+        $client = $this->client(self::empty(200));
+        $client->mailfilter()->isListedOnBpl('8.8.8.8');
+        self::assertSame('/mailfilter/bpllookup', $this->http->lastPath());
+        self::assertSame(['ip' => '8.8.8.8'], $this->http->lastQuery());
+
+        $this->expectException(\Inboxcom\Mailcore\Exception\BadRequestException::class);
+        $this->client(self::error(400, 'IPv4 address not valid'))->mailfilter()->isListedOnBpl('nope');
+    }
+
+    public function testBplLookupReturnsListingWithDetailsWhenBlocked(): void
+    {
+        $body = '{"statusmsg":"Host found on BPL","date_added":"2026-08-11 20:43:43",'
+            . '"timeframe_min":30,"sample":["fischer10@indamail.hu","ogitrew@citromail.hu"]}';
+        $listing = $this->client(self::raw($body, 409))->mailfilter()->bplLookup('1.0.210.163');
+
+        self::assertNotNull($listing);
+        self::assertSame('1.0.210.163', $listing->ip);
+        self::assertSame('2026-08-11 20:43:43', $listing->dateAdded);
+        self::assertSame(30, $listing->timeframeMinutes);
+        self::assertSame(['fischer10@indamail.hu', 'ogitrew@citromail.hu'], $listing->sampleUsernames);
+    }
+
+    public function testBplLookupReturnsNullWhenClean(): void
+    {
+        self::assertNull($this->client(self::empty(200))->mailfilter()->bplLookup('8.8.8.8'));
+    }
 }

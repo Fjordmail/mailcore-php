@@ -7,6 +7,7 @@ namespace Inboxcom\Mailcore\Resource;
 use Inboxcom\Mailcore\Exception\ConflictException;
 use Inboxcom\Mailcore\Exception\ExpectationFailedException;
 use Inboxcom\Mailcore\Http\Transport;
+use Inboxcom\Mailcore\Model\BplListing;
 use Inboxcom\Mailcore\Model\SmtpLimitHit;
 use Inboxcom\Mailcore\Model\SpamFlag;
 use OpenApi\Attributes as OA;
@@ -327,6 +328,51 @@ final class Mailfilter
         } catch (ConflictException) {
             return true;
         }
+    }
+
+    /**
+     * Look an IPv4 address up against the BPL — the bruteforce-prevention block
+     * list. A host lands here when repeated failed auth attempts get it L2-blocked
+     * on the user-facing firewalls.
+     *
+     * @return BplListing|null The block details (sample usernames tried and the
+     *                         timeframe the abuse spanned) when the host is listed
+     *                         (the API's 409), or null when the host is clean (200).
+     */
+    #[OA\Get(
+        path: '/mailfilter/bpllookup',
+        operationId: 'bplLookup',
+        summary: 'BPL lookup',
+        description: 'Look up an IPv4 address against the BPL (bruteforce-prevention block list) Mailcore enforces',
+        tags: ['mailfilter'],
+        parameters: [new OA\Parameter(ref: '#/components/parameters/IPv4')],
+        responses: [
+            new OA\Response(response: 200, description: 'Not found on the BPL'),
+            new OA\Response(response: 400, description: 'IPv4 address not valid', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 409, description: 'Host found on the BPL', content: new OA\JsonContent(ref: '#/components/schemas/BplListing')),
+        ],
+    )]
+    public function bplLookup(string $ip): ?BplListing
+    {
+        try {
+            $this->transport->get('/mailfilter/bpllookup', ['ip' => $ip]);
+
+            return null;
+        } catch (ConflictException $e) {
+            $decoded = is_string($e->body) ? json_decode($e->body, true) : null;
+
+            return BplListing::fromArray($ip, is_array($decoded) ? $decoded : []);
+        }
+    }
+
+    /**
+     * Whether an IPv4 address is currently on the BPL — a convenience predicate
+     * mirroring {@see isListedOnRbl()} / {@see isListedOnCdl()}. Use {@see bplLookup()}
+     * when you also need the block details.
+     */
+    public function isListedOnBpl(string $ip): bool
+    {
+        return $this->bplLookup($ip) !== null;
     }
 
     /**

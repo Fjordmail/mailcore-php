@@ -267,6 +267,23 @@ final class MailfilterContractTest extends ContractTestCase
     // public canonical test entry (127.0.0.2 reads CLEAN on it), so there is no
     // stable IP that reliably yields a 409 to assert against.
 
+    public function testBplLookupCleanAddressReturnsFalse(): void
+    {
+        self::assertFalse($this->client->mailfilter()->isListedOnBpl('8.8.8.8'));
+    }
+
+    public function testBplLookupInvalidIpThrowsBadRequest(): void
+    {
+        $this->expectException(BadRequestException::class);
+        $this->client->mailfilter()->isListedOnBpl('not-an-ip');
+    }
+
+    // No "listed address returns a listing" BPL test: the BPL only holds live
+    // bruteforce sources with no stable public entry, so no IP reliably yields a
+    // 409 to assert against. The 409-body parsing into a BplListing is covered
+    // deterministically by the unit test
+    // MailfilterTest::testBplLookupReturnsListingWithDetailsWhenBlocked.
+
     public function testLatestSmtpLimitHitsInvalidMailboxplanIdIs417(): void
     {
         // The typed latestSmtpLimitHits(?int) can't send a malformed id, so hit it raw.

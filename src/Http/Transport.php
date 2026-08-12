@@ -76,10 +76,12 @@ final class Transport
 
         $status = $response->getStatusCode();
         if ($status < 200 || $status >= 300) {
+            $body = (string) $response->getBody();
             throw ApiException::fromResponse(
                 $status,
-                $this->extractStatusMsg((string) $response->getBody()),
+                $this->extractStatusMsg($body),
                 $path,
+                $body,
             );
         }
 
