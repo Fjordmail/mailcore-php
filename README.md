@@ -74,7 +74,7 @@ The core covers **all 55 operations** of the live Mailcore API, grouped by tag o
 | `reports()` | 1 — suspicious mailbox activity |
 | `datadump()` | 1 — fetch latest (raw bytes) |
 
-Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`, `mailfilter()->isListedOnCdl()`, `mailfilter()->isListedOnBpl()`). For richer detail, `mailfilter()->rblLookup()` returns an `RblResult` naming which lists flag the IP, and `mailfilter()->bplLookup()` returns a `BplListing` (sample usernames + abuse timeframe) when the host is blocked (or `null` when clean).
+Object responses come back as typed models in `src/Model`; list endpoints return `list<Model>`. A few binary-outcome endpoints are exposed as predicates (`isAvailable()`, `isReserved()`, `verifyPassword()`, `mailfilter()->isListedOnRbl()`, `mailfilter()->isListedOnCdl()`, `mailfilter()->isListedOnBpl()`). For the BPL, `mailfilter()->bplLookup()` additionally returns a `BplListing` (sample usernames + abuse timeframe) when the host is blocked, or `null` when clean.
 
 ## OpenAPI
 

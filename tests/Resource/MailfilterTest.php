@@ -136,20 +136,6 @@ final class MailfilterTest extends MailcoreTestCase
         $this->client(self::error(400, 'IPv4 address not valid'))->mailfilter()->isListedOnRbl('nope');
     }
 
-    public function testRblLookupReturnsPerListResults(): void
-    {
-        $listed = $this->client(self::raw('{"cbl.mailcore.net":"LISTED","sbl-xbl.spamhaus.org":"CLEAN"}', 409))
-            ->mailfilter()->rblLookup('127.0.0.2');
-        self::assertTrue($listed->listed);
-        self::assertSame(['cbl.mailcore.net' => true, 'sbl-xbl.spamhaus.org' => false], $listed->lists);
-        self::assertSame(['cbl.mailcore.net'], $listed->listedOn());
-
-        $clean = $this->client(self::raw('{"cbl.mailcore.net":"CLEAN","sbl-xbl.spamhaus.org":"CLEAN"}', 200))
-            ->mailfilter()->rblLookup('8.8.8.8');
-        self::assertFalse($clean->listed);
-        self::assertSame([], $clean->listedOn());
-    }
-
     public function testCdlLookupListedAndClean(): void
     {
         self::assertTrue($this->client(self::error(409, '[ip] was found listed on CDL'))->mailfilter()->isListedOnCdl('8.8.8.8'));
