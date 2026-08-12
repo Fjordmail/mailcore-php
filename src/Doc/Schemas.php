@@ -71,6 +71,13 @@ use OpenApi\Attributes as OA;
     ],
 )]
 #[OA\Schema(
+    schema: 'RblResult',
+    type: 'object',
+    description: 'Per-RBL lookup result: each key is an RBL zone Mailcore checks, each value its status.',
+    additionalProperties: new OA\AdditionalProperties(type: 'string', enum: ['CLEAN', 'LISTED']),
+    example: ['cbl.mailcore.net' => 'CLEAN', 'sbl-xbl.spamhaus.org' => 'LISTED'],
+)]
+#[OA\Schema(
     schema: 'Login',
     type: 'object',
     description: 'A login record; fields present vary by endpoint.',
