@@ -8,6 +8,7 @@ use Inboxcom\Mailcore\Exception\ConflictException;
 use Inboxcom\Mailcore\Exception\ExpectationFailedException;
 use Inboxcom\Mailcore\Http\Transport;
 use Inboxcom\Mailcore\Model\BplListing;
+use Inboxcom\Mailcore\Model\RblResult;
 use Inboxcom\Mailcore\Model\SmtpLimitHit;
 use Inboxcom\Mailcore\Model\SpamFlag;
 use OpenApi\Attributes as OA;
@@ -262,10 +263,12 @@ final class Mailfilter
     }
 
     /**
-     * Look an IPv4 address up against the RBLs Mailcore enforces.
+     * Look an IPv4 address up against the RBLs Mailcore enforces. Both the clean
+     * (200) and listed (409) responses carry the same per-zone map, so the result
+     * always names which RBLs Mailcore checked and how each answered.
      *
-     * @return bool True if the address is currently listed (the API's 409),
-     *              false if clean (200).
+     * @return RblResult The per-RBL statuses; {@see RblResult::$listed} is true when
+     *                   the address is on one or more lists (the API's 409).
      */
     #[OA\Get(
         path: '/mailfilter/rbllookup',
@@ -275,20 +278,31 @@ final class Mailfilter
         tags: ['mailfilter'],
         parameters: [new OA\Parameter(ref: '#/components/parameters/IPv4')],
         responses: [
-            new OA\Response(response: 200, description: 'Not found on any known RBL lists'),
+            new OA\Response(response: 200, description: 'Per-RBL statuses (all CLEAN)', content: new OA\JsonContent(ref: '#/components/schemas/RblResult')),
             new OA\Response(response: 400, description: 'IPv4 address not valid', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
-            new OA\Response(response: 409, description: 'Found listed on RBL lists', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 409, description: 'Per-RBL statuses (one or more LISTED)', content: new OA\JsonContent(ref: '#/components/schemas/RblResult')),
         ],
     )]
-    public function isListedOnRbl(string $ip): bool
+    public function rblLookup(string $ip): RblResult
     {
         try {
-            $this->transport->get('/mailfilter/rbllookup', ['ip' => $ip]);
+            $body = $this->transport->get('/mailfilter/rbllookup', ['ip' => $ip]);
 
-            return false;
-        } catch (ConflictException) {
-            return true;
+            return RblResult::fromMap($ip, false, is_array($body) ? $body : []);
+        } catch (ConflictException $e) {
+            $decoded = is_string($e->body) ? json_decode($e->body, true) : null;
+
+            return RblResult::fromMap($ip, true, is_array($decoded) ? $decoded : []);
         }
+    }
+
+    /**
+     * Whether an IPv4 address is on any RBL Mailcore enforces — a convenience
+     * predicate. Use {@see rblLookup()} to see which lists flag it.
+     */
+    public function isListedOnRbl(string $ip): bool
+    {
+        return $this->rblLookup($ip)->listed;
     }
 
     /**

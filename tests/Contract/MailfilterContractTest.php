@@ -252,6 +252,19 @@ final class MailfilterContractTest extends ContractTestCase
         self::assertTrue($this->client->mailfilter()->isListedOnRbl('127.0.0.2'));
     }
 
+    public function testRblLookupNamesTheListsFlaggingTheAddress(): void
+    {
+        $clean = $this->client->mailfilter()->rblLookup('8.8.8.8');
+        self::assertFalse($clean->listed);
+        self::assertNotEmpty($clean->lists, 'the result names the RBLs Mailcore checked');
+        self::assertSame([], $clean->listedOn());
+
+        // 127.0.0.2 is the canonical DNSBL test entry: reliably listed on every zone.
+        $listed = $this->client->mailfilter()->rblLookup('127.0.0.2');
+        self::assertTrue($listed->listed);
+        self::assertNotEmpty($listed->listedOn(), 'a listed IP names the RBLs that flag it');
+    }
+
     public function testCdlLookupCleanAddressReturnsFalse(): void
     {
         self::assertFalse($this->client->mailfilter()->isListedOnCdl('8.8.8.8'));
